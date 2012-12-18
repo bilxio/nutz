@@ -21,7 +21,7 @@ public @interface ColDefine {
 	 * 
 	 * @see org.nutz.dao.entity.annotation.ColType
 	 */
-	ColType type();
+	ColType type() default ColType.VARCHAR;
 
 	int width() default 0;
 
@@ -35,5 +35,17 @@ public @interface ColDefine {
 	 * 描述当前字段是否自增，如果和 @Id 冲突，以 @Id 的优先
 	 */
 	boolean auto() default false;
+
+	String customType() default "";
+
+	/**
+	 * 描述当前字段是否可插入
+	 */
+	boolean insert() default true;
+
+	/**
+	 * 描述当前字段是否可更新
+	 */
+	boolean update() default true;
 
 }

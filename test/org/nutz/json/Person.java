@@ -4,76 +4,85 @@ import java.sql.Date;
 
 public class Person {
 
-	private int age;
-	private String name;
-	private String realname;
-	private Date birthday;
-	private Person father;
-	private Company company;
+    private int age;
+    private String name;
+    private PersonSex sex;
+    private String realname;
+    private Date birthday;
+    private Person father;
+    private Company company;
 
-	private int num;
+    private int num;
 
-	public int getNum() {
-		return num;
-	}
+    public PersonSex getSex() {
+        return sex;
+    }
 
-	public void setNum(int num) {
-		this.num = num + 1;
-	}
+    public void setSex(PersonSex sex) {
+        this.sex = sex;
+    }
 
-	public Company getCompany() {
-		return company;
-	}
+    public int getNum() {
+        return num;
+    }
 
-	public void setCompany(Company company) {
-		this.company = company;
-	}
+    public void setNum(int num) {
+        this.num = num + 1;
+    }
 
-	public String getRealname() {
-		return realname;
-	}
+    public Company getCompany() {
+        return company;
+    }
 
-	public void setRealname(String realname) {
-		this.realname = realname;
-	}
+    public void setCompany(Company company) {
+        this.company = company;
+    }
 
-	public int getAge() {
-		return age;
-	}
+    public String getRealname() {
+        return realname;
+    }
 
-	public void setAge(int age) {
-		this.age = age;
-	}
+    public void setRealname(String realname) {
+        this.realname = realname;
+    }
 
-	public Person getFather() {
-		return father;
-	}
+    public int getAge() {
+        return age;
+    }
 
-	public void setFather(Person father) {
-		this.father = father;
-	}
+    public void setAge(int age) {
+        this.age = age;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public Person getFather() {
+        return father;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setFather(Person father) {
+        this.father = father;
+    }
 
-	public Date getBirthday() {
-		return birthday;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setBirthday(Date birthday) {
-		this.birthday = birthday;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public String dump() {
-		return String.format(	"name\t:%s\nage\t:%d\nrealname:%s\nbirthday:%s",
-								name,
-								age,
-								realname,
-								birthday);
-	}
+    public Date getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
+    }
+
+    public String dump() {
+        return String.format(    "name\t:%s\nage\t:%d\nrealname:%s\nbirthday:%s",
+                                name,
+                                age,
+                                realname,
+                                birthday);
+    }
 }

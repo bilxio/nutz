@@ -6,109 +6,100 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.List;
 
 import org.nutz.lang.Strings;
+import org.nutz.lang.util.Context;
 import org.nutz.log.Log;
 import org.nutz.log.Logs;
 import org.nutz.trans.Atom;
 
 public class SocketAtom implements Atom {
 
-	private static final Log log = Logs.get();
+    private static final Log log = Logs.get();
 
-	protected Socket socket;
+    protected Socket socket;
 
-	protected OutputStream ops;
+    protected OutputStream ops;
 
-	protected BufferedReader br;
+    protected BufferedReader br;
 
-	protected String line;
+    protected String line;
 
-	protected SocketActionTable saTable;
+    protected SocketActionTable saTable;
 
-	protected SocketLock lock;
+    protected Context context;
 
-	protected List<SocketAtom> atoms;
+    public SocketAtom(Context context, Socket socket, SocketActionTable saTable) {
+        this.context = context;
+        this.socket = socket;
+        this.saTable = saTable;
+    }
 
-	protected SocketAtom(	List<SocketAtom> atoms,
-							SocketLock lock,
-							Socket socket,
-							SocketActionTable saTable) {
-		this.atoms = atoms;
-		this.lock = lock;
-		this.socket = socket;
-		this.saTable = saTable;
-	}
+    public void run() {
+        if (this.context.getBoolean("stop")) {
+            if (log.isInfoEnabled())
+                log.info("stop=true, so, exit ...."); //线程池里面可能还有有尚未启动的任务
+                                                      //所以,这里还需要判断一下
+            Sockets.safeClose(socket);
+            return;
+        }
+        
+        if (log.isDebugEnabled())
+            log.debugf("connect with '%s'", socket.getRemoteSocketAddress().toString());
 
-	public void run() {
-		if (log.isDebugEnabled())
-			log.debugf("connect with '%s'", socket.getRemoteSocketAddress().toString());
+        try {
+            br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            ops = socket.getOutputStream();
+        }
+        catch (IOException e1) {
+            return;
+        }
 
-		atoms.add(this);
+        // 开始交互
+        try {
+            doRun();
+        }
+        catch (SocketException e) {}
+        // 要关闭 socket 监听 ...
+        catch (CloseSocketException e) {
+            if (log.isInfoEnabled())
+                log.info("Catch CloseSocketException , set lock stop");
+            context.set("stop", true);
+        }
+        catch (IOException e) {
+            log.error("Error!! ", e);
+        }
+        // 最后保证关闭
+        finally {
+            if (log.isDebugEnabled())
+                log.debug("Close socket");
+            Sockets.safeClose(socket);
+        }
+    }
 
-		try {
-			br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			ops = socket.getOutputStream();
-		}
-		catch (IOException e1) {
-			return;
-		}
+    protected void doRun() throws IOException {
+        // 预先读取一行
+        line = br.readLine();
 
-		// 开始交互
-		try {
-			doRun();
-		}
-		catch (SocketException e) {}
-		// 要关闭 socket 监听 ...
-		catch (CloseSocketException e) {
-			if (log.isInfoEnabled())
-				log.info("Catch CloseSocketException , set lock stop");
-			lock.setStop();
-		}
-		catch (IOException e) {
-			log.error("Error!! ", e);
-		}
-		finally {
-			Sockets.safeClose(socket);
-			// 移除自己
-			atoms.remove(this);
+        // 在这个 socket 中逐行读取 ...
+        while (null != line) {
+            if (log.isDebugEnabled())
+                log.debug("  <<socket<<: " + line);
 
-			if (log.isDebugEnabled())
-				log.debug("Done and notify lock");
+            SocketAction action = saTable.get(Strings.trim(line));
+            if (null != action) {
+                SocketContext context = new SocketContext(this);
+                // action.run 抛出的异常会被原汁原味的抛到外面，
+                // 而本函数的异常则在各个语句被处理了 ^_^
+                action.run(context);
+            }
+            // 继续读取
+            line = br.readLine();
+        }
+    }
 
-			synchronized (lock) {
-				try {
-					lock.notify();
-				}
-				catch (Exception e) {}
-			}
-		}
-	}
-
-	protected void doRun() throws IOException {
-		// 预先读取一行
-		line = br.readLine();
-
-		// 在这个 socket 中逐行读取 ...
-		while (null != line) {
-			if (log.isDebugEnabled())
-				log.debug("  <<socket<<: " + line);
-
-			SocketAction action = saTable.get(Strings.trim(line));
-			if (null != action) {
-				SocketContext context = new SocketContext(this);
-				// action.run 抛出的异常会被原汁原味的抛到外面，
-				// 而本函数的异常则在各个语句被处理了 ^_^
-				action.run(context);
-			}
-			// 继续读取
-			line = br.readLine();
-		}
-	}
-
-	public Socket getSocket() {
-		return socket;
-	}
+    public Socket getSocket() {
+        return socket;
+    }
 
 }

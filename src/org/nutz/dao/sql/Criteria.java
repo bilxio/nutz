@@ -1,6 +1,7 @@
 package org.nutz.dao.sql;
 
 import org.nutz.dao.Condition;
+import org.nutz.dao.pager.Pager;
 import org.nutz.dao.util.cri.SqlExpressionGroup;
 
 /**
@@ -10,8 +11,9 @@ import org.nutz.dao.util.cri.SqlExpressionGroup;
  */
 public interface Criteria extends Condition, PItem {
 
-	SqlExpressionGroup where();
-	
-	OrderBy getOrderBy();
+    SqlExpressionGroup where();
 
+    OrderBy getOrderBy();
+
+    Pager getPager();
 }

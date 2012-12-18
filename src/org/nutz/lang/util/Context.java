@@ -6,34 +6,36 @@ import java.util.Set;
 
 public interface Context extends Cloneable {
 
-	Context set(String name, Object value);
+    Context set(String name, Object value);
 
-	Set<String> keys();
-	
-	Map<String,Object> getInnerMap();
+    Set<String> keys();
 
-	Context putAll(Object obj);
-	
-	boolean has(String key);
+    Map<String, Object> getInnerMap();
 
-	Context clear();
+    Context putAll(Object obj);
 
-	Object get(String name);
+    Context putAll(String prefix, Object obj);
 
-	<T> T getAs(Class<T> type, String name);
+    boolean has(String key);
 
-	int getInt(String name);
+    Context clear();
 
-	String getString(String name);
+    Object get(String name);
 
-	boolean getBoolean(String name);
+    <T> T getAs(Class<T> type, String name);
 
-	float getFloat(String name);
+    int getInt(String name);
 
-	Map<String, Object> getMap(String name);
+    String getString(String name);
 
-	List<Object> getList(String name);
+    boolean getBoolean(String name);
 
-	Context clone();
+    float getFloat(String name);
+
+    Map<String, Object> getMap(String name);
+
+    List<Object> getList(String name);
+
+    Context clone();
 
 }

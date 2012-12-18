@@ -2,6 +2,7 @@ package org.nutz.dao;
 
 import org.nutz.dao.entity.Entity;
 import org.nutz.dao.jdbc.ValueAdaptor;
+import org.nutz.dao.pager.Pager;
 import org.nutz.dao.sql.Criteria;
 import org.nutz.dao.sql.OrderBy;
 import org.nutz.dao.sql.Pojo;
@@ -46,148 +47,171 @@ import org.nutz.lang.segment.CharSegment;
  */
 public class Cnd implements OrderBy, Criteria {
 
-	/*------------------------------------------------------------------*/
-	public static Condition format(String format, Object... args) {
-		return Strings.isBlank(format) ? null : new SimpleCondition(format, args);
-	}
+    /*------------------------------------------------------------------*/
+    public static Condition format(String format, Object... args) {
+        return Strings.isBlank(format) ? null : new SimpleCondition(format, args);
+    }
 
-	public static Condition wrap(String str) {
-		return Strings.isBlank(str) ? null : new SimpleCondition((Object) str);
-	}
+    public static Condition wrap(String str) {
+        return Strings.isBlank(str) ? null : new SimpleCondition((Object) str);
+    }
 
-	public static Condition wrap(String sql, Object value) {
-		return Strings.isBlank(sql) ? null : new SimpleCondition(new CharSegment(sql).setBy(value));
-	}
+    public static Condition wrap(String sql, Object value) {
+        return Strings.isBlank(sql) ? null : new SimpleCondition(new CharSegment(sql).setBy(value));
+    }
 
-	public static SqlExpression exp(String name, String op, Object value) {
-		return Exps.create(name, op, value);
-	}
+    public static SqlExpression exp(String name, String op, Object value) {
+        return Exps.create(name, op, value);
+    }
 
-	public static SqlExpressionGroup exps(String name, String op, Object value) {
-		return exps(exp(name, op, value));
-	}
+    public static SqlExpressionGroup exps(String name, String op, Object value) {
+        return exps(exp(name, op, value));
+    }
 
-	public static SqlExpressionGroup exps(SqlExpression exp) {
-		return new SqlExpressionGroup().and(exp);
-	}
+    public static SqlExpressionGroup exps(SqlExpression exp) {
+        return new SqlExpressionGroup().and(exp);
+    }
 
-	public static Cnd where(String name, String op, Object value) {
-		return new Cnd(Cnd.exp(name, op, value));
-	}
+    public static Cnd where(String name, String op, Object value) {
+        return new Cnd(Cnd.exp(name, op, value));
+    }
 
-	public static Cnd where(SqlExpression e) {
-		return new Cnd(e);
-	}
+    public static Cnd where(SqlExpression e) {
+        return new Cnd(e);
+    }
 
-	public static SimpleCriteria cri() {
-		return new SimpleCriteria();
-	}
+    public static SimpleCriteria cri() {
+        return new SimpleCriteria();
+    }
 
-	public static OrderBy orderBy() {
-		return new Cnd();
-	}
+    public static OrderBy orderBy() {
+        return new Cnd();
+    }
 
-	/*------------------------------------------------------------------*/
+    public static Cnd limit() {
+        return new Cnd();
+    }
 
-	private SimpleCriteria cri;
+    /*------------------------------------------------------------------*/
 
-	Cnd() {
-		cri = new SimpleCriteria();
-	}
+    private SimpleCriteria cri;
 
-	protected Cnd(SqlExpression exp) {
-		this();
-		cri.where().and(exp);
-	}
+    Cnd() {
+        cri = new SimpleCriteria();
+    }
 
-	public OrderBy asc(String name) {
-		cri.asc(name);
-		return this;
-	}
+    protected Cnd(SqlExpression exp) {
+        this();
+        cri.where().and(exp);
+    }
 
-	public OrderBy desc(String name) {
-		cri.desc(name);
-		return this;
-	}
+    public OrderBy asc(String name) {
+        cri.asc(name);
+        return this;
+    }
 
-	public Cnd and(SqlExpression exp) {
-		cri.where().and(exp);
-		return this;
-	}
+    public OrderBy desc(String name) {
+        cri.desc(name);
+        return this;
+    }
 
-	public Cnd and(String name, String op, Object value) {
-		return and(Cnd.exp(name, op, value));
-	}
+    public Cnd and(SqlExpression exp) {
+        cri.where().and(exp);
+        return this;
+    }
 
-	public Cnd or(SqlExpression exp) {
-		cri.where().or(exp);
-		return this;
-	}
+    public Cnd and(String name, String op, Object value) {
+        return and(Cnd.exp(name, op, value));
+    }
 
-	public Cnd or(String name, String op, Object value) {
-		return or(Cnd.exp(name, op, value));
-	}
+    public Cnd or(SqlExpression exp) {
+        cri.where().or(exp);
+        return this;
+    }
 
-	public Cnd andNot(SqlExpression exp) {
-		cri.where().and(exp.setNot(true));
-		return this;
-	}
+    public Cnd or(String name, String op, Object value) {
+        return or(Cnd.exp(name, op, value));
+    }
 
-	public Cnd andNot(String name, String op, Object value) {
-		return andNot(Cnd.exp(name, op, value));
-	}
+    public Cnd andNot(SqlExpression exp) {
+        cri.where().and(exp.setNot(true));
+        return this;
+    }
 
-	public Cnd orNot(SqlExpression exp) {
-		cri.where().or(exp.setNot(true));
-		return this;
-	}
+    public Cnd andNot(String name, String op, Object value) {
+        return andNot(Cnd.exp(name, op, value));
+    }
 
-	public Cnd orNot(String name, String op, Object value) {
-		return orNot(Cnd.exp(name, op, value));
-	}
+    public Cnd orNot(SqlExpression exp) {
+        cri.where().or(exp.setNot(true));
+        return this;
+    }
 
-	public String toSql(Entity<?> en) {
-		return cri.toSql(en);
-	}
+    public Cnd orNot(String name, String op, Object value) {
+        return orNot(Cnd.exp(name, op, value));
+    }
 
-	public boolean equals(Object obj) {
-		return cri.equals(obj);
-	}
+    public Pager getPager() {
+        return cri.getPager();
+    }
 
-	public String toString() {
-		return cri.toString();
-	}
+    public String toSql(Entity<?> en) {
+        return cri.toSql(en);
+    }
 
-	public void setPojo(Pojo pojo) {
-		cri.setPojo(pojo);
-	}
+    public boolean equals(Object obj) {
+        return cri.equals(obj);
+    }
 
-	public Pojo getPojo() {
-		return cri.getPojo();
-	}
+    public String toString() {
+        return cri.toString();
+    }
 
-	public void joinSql(Entity<?> en, StringBuilder sb) {
-		cri.joinSql(en, sb);
-	}
+    public void setPojo(Pojo pojo) {
+        cri.setPojo(pojo);
+    }
 
-	public int joinAdaptor(Entity<?> en, ValueAdaptor[] adaptors, int off) {
-		return cri.joinAdaptor(en, adaptors, off);
-	}
+    public Pojo getPojo() {
+        return cri.getPojo();
+    }
 
-	public int joinParams(Entity<?> en, Object obj, Object[] params, int off) {
-		return cri.joinParams(en, obj, params, off);
-	}
+    public void joinSql(Entity<?> en, StringBuilder sb) {
+        cri.joinSql(en, sb);
+    }
 
-	public int paramCount(Entity<?> en) {
-		return cri.paramCount(en);
-	}
+    public int joinAdaptor(Entity<?> en, ValueAdaptor[] adaptors, int off) {
+        return cri.joinAdaptor(en, adaptors, off);
+    }
 
-	public SqlExpressionGroup where() {
-		return cri.where();
-	}
+    public int joinParams(Entity<?> en, Object obj, Object[] params, int off) {
+        return cri.joinParams(en, obj, params, off);
+    }
 
-	public OrderBy getOrderBy() {
-		return cri.getOrderBy();
-	}
+    public int paramCount(Entity<?> en) {
+        return cri.paramCount(en);
+    }
+
+    public SqlExpressionGroup where() {
+        return cri.where();
+    }
+
+    public OrderBy getOrderBy() {
+        return cri.getOrderBy();
+    }
+
+    public Cnd limit(int pageNumber, int pageSize) {
+        cri.setPager(pageNumber, pageSize);
+        return this;
+    }
+
+    public Cnd limit(int pageSize) {
+        cri.setPager(1, pageSize);
+        return this;
+    }
+
+    public Cnd limit(Pager pager) {
+        cri.setPager(pager);
+        return this;
+    }
 
 }

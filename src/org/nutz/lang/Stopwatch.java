@@ -7,54 +7,82 @@ package org.nutz.lang;
  */
 public class Stopwatch {
 
-	private long from;
-	private long to;
+    private boolean nano;
 
-	public static Stopwatch begin() {
-		Stopwatch sw = new Stopwatch();
-		sw.start();
-		return sw;
-	}
+    private long from;
 
-	public static Stopwatch create() {
-		return new Stopwatch();
-	}
+    private long to;
 
-	public static Stopwatch run(Runnable atom) {
-		Stopwatch sw = begin();
-		atom.run();
-		sw.stop();
-		return sw;
-	}
+    public static Stopwatch begin() {
+        Stopwatch sw = new Stopwatch();
+        sw.start();
+        return sw;
+    }
 
-	public long start() {
-		from = System.currentTimeMillis();
-		return from;
-	}
+    public static Stopwatch beginNano() {
+        Stopwatch sw = new Stopwatch();
+        sw.nano = true;
+        sw.start();
+        return sw;
+    }
 
-	public long stop() {
-		to = System.currentTimeMillis();
-		return to;
-	}
+    public static Stopwatch create() {
+        return new Stopwatch();
+    }
 
-	public long getDuration() {
-		return to - from;
-	}
+    public static Stopwatch createNano() {
+        Stopwatch sw = new Stopwatch();
+        sw.nano = true;
+        return sw;
+    }
 
-	public long getStartTime() {
-		return from;
-	}
+    public static Stopwatch run(Runnable atom) {
+        Stopwatch sw = begin();
+        atom.run();
+        sw.stop();
+        return sw;
+    }
 
-	public long getEndTime() {
-		return to;
-	}
+    public static Stopwatch runNano(Runnable atom) {
+        Stopwatch sw = beginNano();
+        atom.run();
+        sw.stop();
+        return sw;
+    }
 
-	@Override
-	public String toString() {
-		return String.format(	"Total: %dms : [%s]=>[%s]",
-								this.getDuration(),
-								new java.sql.Timestamp(from).toString(),
-								new java.sql.Timestamp(to).toString());
-	}
+    public long start() {
+        from = currentTime();
+        return from;
+    }
+
+    private long currentTime() {
+        return nano ? System.nanoTime() : System.currentTimeMillis();
+    }
+
+    public long stop() {
+        to = currentTime();
+        return to;
+    }
+
+    public long getDuration() {
+        return to - from;
+    }
+
+    public long getStartTime() {
+        return from;
+    }
+
+    public long getEndTime() {
+        return to;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(    "Total: %d%s : [%s]=>[%s]",
+                                this.getDuration(),
+                                (nano ? "ns" : "ms"),
+                                new java.sql.Timestamp(from).toString(),
+                                new java.sql.Timestamp(to).toString());
+    }
 
 }

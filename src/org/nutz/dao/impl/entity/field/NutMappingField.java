@@ -5,6 +5,7 @@ import java.sql.SQLException;
 
 import org.nutz.dao.entity.Entity;
 import org.nutz.dao.entity.MappingField;
+import org.nutz.dao.entity.Record;
 import org.nutz.dao.entity.annotation.ColType;
 import org.nutz.dao.impl.entity.EntityObjectContext;
 import org.nutz.dao.jdbc.ValueAdaptor;
@@ -42,7 +43,13 @@ public class NutMappingField extends AbstractEntityField implements MappingField
 
 	private boolean hasColumnComment;
 
+	private String customDbType;
+
 	private ValueAdaptor adaptor;
+
+	private boolean insert = true;
+
+	private boolean update = true;
 
 	public NutMappingField(Entity<?> entity) {
 		super(entity);
@@ -55,6 +62,14 @@ public class NutMappingField extends AbstractEntityField implements MappingField
 
 	public void setAdaptor(ValueAdaptor adaptor) {
 		this.adaptor = adaptor;
+	}
+
+	public void injectValue(Object obj, Record rec) {
+		try {
+			Object val = rec.get(columnName);
+			this.setValue(obj, val);
+		}
+		catch (Exception e) {}
 	}
 
 	public void injectValue(Object obj, ResultSet rs) {
@@ -197,6 +212,30 @@ public class NutMappingField extends AbstractEntityField implements MappingField
 
 	public boolean hasColumnComment() {
 		return hasColumnComment;
+	}
+
+	public void setCustomDbType(String customDbType) {
+		this.customDbType = customDbType;
+	}
+
+	public String getCustomDbType() {
+		return customDbType;
+	}
+
+	public boolean isInsert() {
+		return insert;
+	}
+
+	public boolean isUpdate() {
+		return update;
+	}
+
+	public void setInsert(boolean insert) {
+		this.insert = insert;
+	}
+
+	public void setUpdate(boolean update) {
+		this.update = update;
 	}
 
 }

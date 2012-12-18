@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.nutz.lang.objs.Objs;
-
 /**
  * 对象路径节点转换.<br/>
  * 将URL中的字符串参数名转换成对结构, 然后通过 {@link Objs}转换成实体对象<br/>
@@ -100,7 +98,6 @@ public class ObjectNaviNode {
     /**
      * 提取子路径
      * @param path
-     * @return
      */
     private String fetchSubPath(String path){
         if(isList(fetchNode(path))){
@@ -125,8 +122,6 @@ public class ObjectNaviNode {
     
     /**
      * 取得节点的name信息
-     * @param key
-     * @return
      */
     private String fetchName(String path){
         String key = fetchNode(path);
@@ -138,7 +133,6 @@ public class ObjectNaviNode {
     
     /**
      * 提取出list,map结构
-     * @return
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public Object get(){
@@ -162,7 +156,6 @@ public class ObjectNaviNode {
     /**
      * 是否是list节点
      * @param key
-     * @return
      */
     private boolean isList(String key){
         return key.indexOf(LIST_SEPARATOR) > 0;

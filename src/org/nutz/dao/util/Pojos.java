@@ -3,10 +3,12 @@ package org.nutz.dao.util;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.nutz.dao.Chain;
 import org.nutz.dao.Condition;
+import org.nutz.dao.DaoException;
 import org.nutz.dao.FieldFilter;
 import org.nutz.dao.FieldMatcher;
 import org.nutz.dao.entity.Entity;
@@ -14,20 +16,21 @@ import org.nutz.dao.entity.EntityField;
 import org.nutz.dao.entity.MappingField;
 import org.nutz.dao.entity.PkType;
 import org.nutz.dao.impl.jdbc.NutPojo;
-import org.nutz.dao.impl.sql.pojo.SingleColumnCondtionPItem;
-import org.nutz.dao.impl.sql.pojo.PkConditionPItem;
-import org.nutz.dao.impl.sql.pojo.QueryEntityFieldsPItem;
 import org.nutz.dao.impl.sql.pojo.ConditionPItem;
 import org.nutz.dao.impl.sql.pojo.EntityTableNamePItem;
 import org.nutz.dao.impl.sql.pojo.EntityViewNamePItem;
 import org.nutz.dao.impl.sql.pojo.InsertFieldsPItem;
 import org.nutz.dao.impl.sql.pojo.InsertValuesPItem;
+import org.nutz.dao.impl.sql.pojo.PkConditionPItem;
+import org.nutz.dao.impl.sql.pojo.QueryEntityFieldsPItem;
+import org.nutz.dao.impl.sql.pojo.SingleColumnCondtionPItem;
 import org.nutz.dao.impl.sql.pojo.SqlTypePItem;
 import org.nutz.dao.impl.sql.pojo.StaticPItem;
 import org.nutz.dao.impl.sql.pojo.UpdateFieldsByChainPItem;
 import org.nutz.dao.impl.sql.pojo.UpdateFieldsPItem;
 import org.nutz.dao.jdbc.JdbcExpert;
 import org.nutz.dao.jdbc.ValueAdaptor;
+import org.nutz.dao.pager.Pager;
 import org.nutz.dao.sql.Criteria;
 import org.nutz.dao.sql.PItem;
 import org.nutz.dao.sql.Pojo;
@@ -83,11 +86,17 @@ public abstract class Pojos {
 		}
 
 		public static PItem cndId(Entity<?> en, Number id) {
-			return cndColumn(en.getIdField(), id);
+		    MappingField mappingField = en.getIdField();
+		    if (mappingField == null)
+		        throw new DaoException("expect @Id but NOT found. " + en.getType().getName());
+			return cndColumn(mappingField, id);
 		}
 
 		public static PItem cndName(Entity<?> en, String name) {
-			return cndColumn(en.getNameField(), name);
+		    MappingField mappingField = en.getNameField();
+            if (mappingField == null)
+                throw new DaoException("expect @Name but NOT found. " + en.getType().getName());
+			return cndColumn(mappingField, name);
 		}
 
 		public static PItem cndColumn(MappingField mappingField, Object def) {
@@ -130,9 +139,11 @@ public abstract class Pojos {
 				}
 				return cndPk(en, pks);
 			default:
-				throw Lang.makeThrow(	"Don't know how to make fetch key %s:'%s'",
-										en.getType().getName(),
-										obj);
+				if (Map.class.isAssignableFrom(en.getType())) {
+					return null; // Map形式的话,不一定需要主键嘛
+				}
+				throw Lang.makeThrow("Don't know how to make fetch key %s:'%s'", en.getType()
+																					.getName(), obj);
 			}
 		}
 
@@ -150,6 +161,20 @@ public abstract class Pojos {
 			return list.toArray(new PItem[list.size()]);
 		}
 
+		public static Pager pager(Condition cnd) {
+			if (null == cnd) {
+				return null;
+			}
+			// 高级条件
+			else if (cnd instanceof Criteria) {
+				return ((Criteria) cnd).getPager();
+			}
+			// 普通条件
+			else {
+				return null;
+			}
+		}
+
 	}
 
 	// 以上是创建 POJO 语句元素的帮助方法
@@ -162,7 +187,7 @@ public abstract class Pojos {
 	public static List<MappingField> getFieldsForInsert(Entity<?> en, FieldMatcher fm) {
 		List<MappingField> re = new ArrayList<MappingField>(en.getMappingFields().size());
 		for (MappingField mf : en.getMappingFields()) {
-			if (!mf.isAutoIncreasement() && !mf.isReadonly())
+			if (!mf.isAutoIncreasement() && !mf.isReadonly() && mf.isInsert())
 				if (null == fm || fm.match(mf.getName()))
 					re.add(mf);
 		}
@@ -180,7 +205,7 @@ public abstract class Pojos {
 				if (en.getPkType() == PkType.COMPOSITE && mf.isCompositePk())
 					continue;
 			}
-			if (mf.isReadonly() || mf.isAutoIncreasement())
+			if (mf.isReadonly() || mf.isAutoIncreasement() || !mf.isUpdate())
 				continue;
 			else if (null != fm && null != refer && fm.isIgnoreNull() && null == mf.getValue(refer))
 				continue;

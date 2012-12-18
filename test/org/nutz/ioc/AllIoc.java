@@ -9,9 +9,10 @@ import org.nutz.ioc.loader.AllLoader;
 import org.nutz.ioc.val.AllVal;
 
 @RunWith(Suite.class)
-@Suite.SuiteClasses({	ChainParsingTest.class,
-						AllJsonIoc.class,
-						AllLoader.class,
-						AllVal.class,
-						AllAopConfigration.class})
+@Suite.SuiteClasses({    ChainParsingTest.class,
+                        AllJsonIoc.class,
+                        AllLoader.class,
+                        AllVal.class,
+                        AllAopConfigration.class,
+                        SimpleIocTest.class})
 public class AllIoc {}

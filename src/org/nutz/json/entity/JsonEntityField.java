@@ -1,6 +1,7 @@
 package org.nutz.json.entity;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 
@@ -8,89 +9,73 @@ import org.nutz.json.JsonField;
 import org.nutz.lang.Lang;
 import org.nutz.lang.Mirror;
 import org.nutz.lang.Strings;
-import org.nutz.lang.eject.EjectBySimpleEL;
+import org.nutz.lang.eject.EjectByGetter;
 import org.nutz.lang.eject.Ejecting;
+import org.nutz.lang.inject.InjectBySetter;
 import org.nutz.lang.inject.Injecting;
-import org.nutz.lang.objs.Objs;
 
 public class JsonEntityField {
 
-	private String name;
+    private String name;
 
-	private Type genericType;
+    private Type genericType;
 
-	private Injecting injecting;
+    private Injecting injecting;
 
-	private Ejecting ejecting;
-	
-	private String createBy;
-	
-	private boolean hasAnno;
+    private Ejecting ejecting;
 
-	@SuppressWarnings("deprecation")
-	public static JsonEntityField eval(Mirror<?> mirror, Field fld) {
-		JsonField jf = fld.getAnnotation(JsonField.class);
-		if (null != jf && jf.ignore())
-			return null;
-		//瞬时变量就不要持久化了
-		if (Modifier.isTransient(fld.getModifiers()))
-			return null;
+    /**
+     * 根据名称获取字段实体, 默认以set优先
+     */
+    public static JsonEntityField eval(String name, Method getter, Method setter) {
+        JsonEntityField jef = new JsonEntityField();
+        jef.genericType = getter.getGenericReturnType();
+        jef.name = name;
+        jef.ejecting = new EjectByGetter(getter);
+        jef.injecting = new InjectBySetter(setter);
+        return jef;
+    }
 
-		JsonEntityField jef = new JsonEntityField();
-	    jef.genericType = Lang.getFieldType(mirror, fld);
-		
-		//看看有没有指定获取方式
-		if (jf != null) {
-			String getBy = jf.getBy();
-			if (Strings.isBlank(getBy))
-				getBy = jf.by();
-			if (!Strings.isBlank(jf.by()))
-				jef.ejecting = new EjectBySimpleEL(getBy);
-			if (!Strings.isBlank(jf.value()))
-				jef.name = jf.value();
-			if (!Strings.isBlank(jf.createBy()))
-				jef.createBy = jf.createBy();
-			jef.hasAnno = true;
-		}
-		if (null == jef.ejecting )
-			jef.ejecting = mirror.getEjecting(fld.getName());
-		if (null == jef.injecting)
-			jef.injecting = mirror.getInjecting(fld.getName());
-		if (null == jef.name)
-			jef.name = fld.getName();
+    public static JsonEntityField eval(Mirror<?> mirror, Field fld) {
+        if (fld == null) {
+            return null;
+        }
+        JsonField jf = fld.getAnnotation(JsonField.class);
+        if (null != jf && jf.ignore())
+            return null;
 
-		return jef;
-	}
+        // 瞬时变量就不要持久化了
+        if (Modifier.isTransient(fld.getModifiers()))
+            return null;
 
-	private JsonEntityField() {}
+        JsonEntityField jef = new JsonEntityField();
+        jef.genericType = Lang.getFieldType(mirror, fld);
+        jef.name = Strings.sBlank(null == jf ? null : jf.value(), fld.getName());
+        jef.ejecting = mirror.getEjecting(fld.getName());
+        jef.injecting = mirror.getInjecting(fld.getName());
 
-	public String getName() {
-		return name;
-	}
+        return jef;
+    }
 
-	public Type getGenericType() {
-		return genericType;
-	}
+    private JsonEntityField() {}
 
-	public void setValue(Object obj, Object value) {
-		injecting.inject(obj, value);
-	}
+    public String getName() {
+        return name;
+    }
 
-	public Object getValue(Object obj) {
-		return ejecting.eject(obj);
-	}
+    public Type getGenericType() {
+        return genericType;
+    }
 
-	public Object createValue(Object holder, Object value) {
-		if (this.createBy == null)
-		    return Objs.convert(value, genericType);
-		try {
-			return holder.getClass().getMethod(createBy, Type.class, Object.class).invoke(holder, genericType, value);
-		} catch (Throwable e){
-			throw Lang.wrapThrow(e);
-		}
-	}
-	
-	public boolean hasAnno() {
-		return hasAnno;
-	}
+    public void setValue(Object obj, Object value) {
+        if (injecting != null)
+            injecting.inject(obj, value);
+    }
+
+    public Object getValue(Object obj) {
+        if (ejecting == null)
+            return null;
+        return ejecting.eject(obj);
+    }
+
 }
